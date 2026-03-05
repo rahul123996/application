@@ -3,29 +3,27 @@ from django.db.models import Sum, F, ExpressionWrapper, DecimalField
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from .models import Company, ProductVariant, Sale
-from .models import Sale
-from django.shortcuts import redirect
 
 
 @login_required
 def dashboard(request):
-    total_companies = Company.objects.count()
-    total_products = ProductVariant.objects.count()
 
-    from django.db.models import Sum
+    total_companies = Company.objects.count()
+
+    total_products = ProductVariant.objects.count()
 
     total_stock = ProductVariant.objects.aggregate(
         total=Sum("stock")
     )["total"] or 0
 
-    total_sold = ProductVariant.objects.aggregate(
-        total=Sum("sold_quantity")
+    total_sold = Sale.objects.aggregate(
+        total=Sum("quantity")
     )["total"] or 0
 
     total_revenue = Sale.objects.aggregate(
         revenue=Sum(
             ExpressionWrapper(
-                F("quantity") * F("variant__selling_price"),
+                F("quantity") * F("sold_price"),
                 output_field=DecimalField()
             )
         )
@@ -34,14 +32,14 @@ def dashboard(request):
     total_profit = Sale.objects.aggregate(
         profit=Sum(
             ExpressionWrapper(
-                (F("variant__selling_price") - F("variant__purchase_price")) * F("quantity"),
+                (F("sold_price") - F("product__purchase_price")) * F("quantity"),
                 output_field=DecimalField()
             )
         )
     )["profit"] or 0
 
     low_stock_items = ProductVariant.objects.filter(
-        total_stock__lte=F("sold_quantity") + F("reorder_level")
+        stock__lte=F("reorder_level")
     )
 
     context = {
@@ -78,24 +76,30 @@ def logout_view(request):
     return redirect("login")
 
 def add_sale(request):
-    products = Product.objects.all()
+    products = ProductVariant.objects.all()
 
     if request.method == "POST":
         product_id = request.POST.get("product")
         quantity = int(request.POST.get("quantity"))
         sold_price = float(request.POST.get("sold_price"))
 
-        product = Product.objects.get(id=product_id)
+        product = ProductVariant.objects.get(id=product_id)
 
-        try:
-            Sale.objects.create(
-                product=product,
-                quantity=quantity,
-                sold_price=sold_price,
-                sold_by=request.user
-            )
-        except:
-            return render(request, "inventory/error.html", {"message": "Not enough stock"})
+        if product.stock < quantity:
+            return render(request, "inventory/error.html", {
+                "message": "Not enough stock available"
+            })
+
+        Sale.objects.create(
+            product=product,
+            quantity=quantity,
+            sold_price=sold_price,
+            sold_by=request.user
+        )
+
+        # Reduce stock
+        product.stock -= quantity
+        product.save()
 
         return redirect("dashboard")
 

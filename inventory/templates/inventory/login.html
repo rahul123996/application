@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Login</title>
+<title>Login</title>
 </head>
 
 <body>
@@ -9,24 +9,24 @@
 <h2>Login</h2>
 
 <form method="POST">
-    {% csrf_token %}
+{% csrf_token %}
 
-    <label>Username</label>
-    <input type="text" name="username" required>
+<label>Username</label>
+<input type="text" name="username">
 
-    <br><br>
+<br><br>
 
-    <label>Password</label>
-    <input type="password" name="password" required>
+<label>Password</label>
+<input type="password" name="password">
 
-    <br><br>
+<br><br>
 
-    <button type="submit">Login</button>
+<button type="submit">Login</button>
 
 </form>
 
 {% if error %}
-<p style="color:red">{{ error }}</p>
+<p>{{ error }}</p>
 {% endif %}
 
 </body>

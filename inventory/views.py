@@ -3,56 +3,29 @@ from django.db.models import Sum, F, ExpressionWrapper, DecimalField
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from .models import Company, ProductVariant, Sale
+from django.db.models import Sum
+from .models import ProductVariant
+from .forms import ProductVariantForm
 
 
 @login_required
 def dashboard(request):
 
-    total_companies = Company.objects.count()
-
     total_products = ProductVariant.objects.count()
 
     total_stock = ProductVariant.objects.aggregate(
-        total=Sum("stock")
-    )["total"] or 0
+        Sum("stock")
+    )["stock__sum"] or 0
 
-    total_sold = Sale.objects.aggregate(
-        total=Sum("quantity")
-    )["total"] or 0
+    total_sales = Sale.objects.aggregate(
+        Sum("quantity")
+    )["quantity__sum"] or 0
 
-    total_revenue = Sale.objects.aggregate(
-        revenue=Sum(
-            ExpressionWrapper(
-                F("quantity") * F("sold_price"),
-                output_field=DecimalField()
-            )
-        )
-    )["revenue"] or 0
-
-    total_profit = Sale.objects.aggregate(
-        profit=Sum(
-            ExpressionWrapper(
-                (F("sold_price") - F("product__purchase_price")) * F("quantity"),
-                output_field=DecimalField()
-            )
-        )
-    )["profit"] or 0
-
-    low_stock_items = ProductVariant.objects.filter(
-        stock__lte=F("reorder_level")
-    )
-
-    context = {
-        "total_companies": total_companies,
+    return render(request, "inventory/dashboard.html", {
         "total_products": total_products,
         "total_stock": total_stock,
-        "total_sold": total_sold,
-        "total_revenue": total_revenue,
-        "total_profit": total_profit,
-        "low_stock_items": low_stock_items,
-    }
-
-    return render(request, "inventory/dashboard.html", context)
+        "total_sales": total_sales
+    })
 
 
 def login_view(request):
@@ -104,3 +77,60 @@ def add_sale(request):
         return redirect("dashboard")
 
     return render(request, "inventory/add_sale.html", {"products": products})
+
+@login_required
+def product_list(request):
+
+    products = ProductVariant.objects.select_related(
+        "product_model",
+        "product_model__company",
+        "product_model__category"
+    )
+
+    return render(request, "inventory/product_list.html", {
+        "products": products
+    })
+
+from django.db.models import Sum
+
+@login_required
+def sales_history(request):
+
+    sales = Sale.objects.select_related(
+        "product",
+        "product__product_model",
+        "product__product_model__company"
+    ).order_by("-date")
+
+    total_sales = sales.aggregate(total=Sum("quantity"))["total"] or 0
+
+    return render(request, "inventory/sales_history.html", {
+        "sales": sales,
+        "total_sales": total_sales
+    })
+
+@login_required
+def low_stock(request):
+
+    low_products = ProductVariant.objects.filter(stock__lt=5)
+
+    return render(request, "inventory/low_stock.html", {
+        "products": low_products
+    })
+
+@login_required
+def add_product(request):
+
+    if request.method == "POST":
+        form = ProductVariantForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+            return redirect("product_list")
+
+    else:
+        form = ProductVariantForm()
+
+    return render(request, "inventory/add_product.html", {
+        "form": form
+    })

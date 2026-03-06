@@ -1,0 +1,28 @@
+<h2>Sales History</h2>
+
+<table border="1">
+<tr>
+<th>Company</th>
+<th>Model</th>
+<th>Color</th>
+<th>Quantity</th>
+<th>Sold Price</th>
+<th>Date</th>
+<th>Sold By</th>
+</tr>
+
+{% for s in sales %}
+<tr>
+<td>{{ s.product.product_model.company.name }}</td>
+<td>{{ s.product.product_model.name }}</td>
+<td>{{ s.product.color }}</td>
+<td>{{ s.quantity }}</td>
+<td>{{ s.sold_price }}</td>
+<td>{{ s.date }}</td>
+<td>{{ s.sold_by }}</td>
+</tr>
+{% endfor %}
+
+</table>
+
+<h3>Total Items Sold: {{ total_sales }}</h3>

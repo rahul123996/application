@@ -1,0 +1,27 @@
+<h2>Product Inventory</h2>
+
+<table border="1">
+<tr>
+<th>Company</th>
+<th>Category</th>
+<th>Model</th>
+<th>Color</th>
+<th>Stock</th>
+<th>Purchase Price</th>
+<th>Selling Price</th>
+</tr>
+
+{% for p in products %}
+<tr>
+<td>{{ p.product_model.company.name }}</td>
+<td>{{ p.product_model.category.name }}</td>
+<td>{{ p.product_model.name }}</td>
+<td>{{ p.color }}</td>
+<td>{{ p.stock }}</td>
+<td>{{ p.purchase_price }}</td>
+<td>{{ p.selling_price }}</td>
+</tr>
+{% endfor %}
+
+</table>
+<a href="{% url 'add_product' %}">Add Product</a>

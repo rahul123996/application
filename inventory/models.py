@@ -70,8 +70,12 @@ class Sale(models.Model):
         if self.product.stock < self.quantity:
             raise ValidationError("Not enough stock")
 
-        self.product.stock -= self.quantity
-        self.product.save()
+        Sale.objects.create(
+            product=product,
+            quantity=quantity,
+            sold_price=sold_price,
+            sold_by=request.user
+)
 
         super().save(*args, **kwargs)
 

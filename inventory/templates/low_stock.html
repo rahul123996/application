@@ -1,0 +1,20 @@
+<h2>Low Stock Alert</h2>
+
+<table border="1">
+<tr>
+<th>Company</th>
+<th>Model</th>
+<th>Color</th>
+<th>Stock</th>
+</tr>
+
+{% for p in products %}
+<tr style="color:red;">
+<td>{{ p.product_model.company.name }}</td>
+<td>{{ p.product_model.name }}</td>
+<td>{{ p.color }}</td>
+<td>{{ p.stock }}</td>
+</tr>
+{% endfor %}
+
+</table>

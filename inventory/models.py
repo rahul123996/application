@@ -1,6 +1,6 @@
 from django.db import models
 from django.core.exceptions import ValidationError
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User 
 
 
 class Company(models.Model):
@@ -15,28 +15,9 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
-
-
-# FIRST Product model
-class ProductModel(models.Model):
-    name = models.CharField(max_length=100)
-
-    company = models.ForeignKey(
-        Company,
-        on_delete=models.CASCADE
-    )
-
-    category = models.ForeignKey(
-        Category,
-        on_delete=models.CASCADE
-    )
-
-    def __str__(self):
-        return self.name
-
-
+    
 class ProductVariant(models.Model):
-    product_model = models.ForeignKey(ProductModel, on_delete=models.CASCADE)
+    product_model = models.ForeignKey("ProductModel", on_delete=models.CASCADE)
     color = models.CharField(max_length=50)
 
     purchase_price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -49,8 +30,30 @@ class ProductVariant(models.Model):
         return f"{self.product_model} - {self.color}"
 
 
+# ✅ NEW MODEL
+class Customer(models.Model):
+
+    name = models.CharField(max_length=100)
+    phone = models.CharField(max_length=15)
+    email = models.EmailField(blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+
+# ✅ UPDATED SALE MODEL
 class Sale(models.Model):
+
     product = models.ForeignKey(ProductVariant, on_delete=models.CASCADE)
+
+    customer = models.ForeignKey(
+        Customer,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
     quantity = models.PositiveIntegerField()
 
     sold_price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -70,14 +73,39 @@ class Sale(models.Model):
         if self.product.stock < self.quantity:
             raise ValidationError("Not enough stock")
 
-        Sale.objects.create(
-            product=product,
-            quantity=quantity,
-            sold_price=sold_price,
-            sold_by=request.user
-)
+        # reduce stock
+        self.product.stock -= self.quantity
+        self.product.save()
 
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"Sale - {self.product}"
+        return f"{self.product} - {self.quantity}"
+    
+class Category(models.Model):
+
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+
+    def __str__(self):
+        return self.name
+
+class ProductModel(models.Model):
+
+    name = models.CharField(max_length=200)
+
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    stock = models.IntegerField()
+    min_stock = models.IntegerField(default=5)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name   

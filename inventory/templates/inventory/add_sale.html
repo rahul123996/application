@@ -1,4 +1,15 @@
 <h2>Add Sale</h2>
+{% if messages %}
+
+{% for message in messages %}
+
+<div class="alert alert-danger">
+{{ message }}
+</div>
+
+{% endfor %}
+
+{% endif %}
 
 <form method="post">
     {% csrf_token %}

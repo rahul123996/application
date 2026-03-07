@@ -1,7 +1,43 @@
-<h2>Product Inventory</h2>
+<!DOCTYPE html>
+<html>
+<head>
 
-<table border="1">
+<title>Product Inventory</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+</head>
+
+
+<body class="bg-light">
+
+<div class="container mt-5">
+
+<h2 class="mb-4">Product Inventory</h2>
+
+
+<!-- SEARCH BOX -->
+
+<form method="GET" class="mb-4">
+
+<input
+type="text"
+name="q"
+class="form-control"
+placeholder="Search product by model or color..."
+value="{{ request.GET.q }}"
+>
+
+</form>
+
+
+
+<table class="table table-bordered table-striped">
+
+<thead class="table-dark">
+
 <tr>
+
 <th>Company</th>
 <th>Category</th>
 <th>Model</th>
@@ -9,19 +45,84 @@
 <th>Stock</th>
 <th>Purchase Price</th>
 <th>Selling Price</th>
+<th>Action</th>
+
 </tr>
+
+</thead>
+
+<tbody>
 
 {% for p in products %}
+
 <tr>
+
 <td>{{ p.product_model.company.name }}</td>
+
 <td>{{ p.product_model.category.name }}</td>
+
 <td>{{ p.product_model.name }}</td>
+
 <td>{{ p.color }}</td>
-<td>{{ p.stock }}</td>
-<td>{{ p.purchase_price }}</td>
-<td>{{ p.selling_price }}</td>
+
+{% if p.stock <= 3 %}
+
+<td>
+<span class="badge bg-danger">
+Low: {{ p.stock }}
+</span>
+</td>
+
+{% else %}
+
+<td>
+<span class="badge bg-success">
+{{ p.stock }}
+</span>
+</td>
+
+{% endif %}
+
+<td>₹ {{ p.purchase_price }}</td>
+
+<td>₹ {{ p.selling_price }}</td>
+
+<td>
+
+<a href="{% url 'edit_product' p.id %}" class="btn btn-sm btn-warning">
+Edit
+</a>
+
+<a href="{% url 'delete_product' p.id %}" class="btn btn-sm btn-danger">
+Delete
+</a>
+
+</td>
+
 </tr>
+
+{% empty %}
+
+<tr>
+
+<td colspan="8" class="text-center">
+No products found
+</td>
+
+</tr>
+
 {% endfor %}
 
+</tbody>
+
 </table>
-<a href="{% url 'add_product' %}">Add Product</a>
+
+
+<a href="{% url 'add_product' %}" class="btn btn-success">
+Add Product
+</a>
+
+</div>
+
+</body>
+</html>
